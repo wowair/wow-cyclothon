@@ -1,6 +1,6 @@
 import React from 'react';
-import {StyleSheet, View} from 'react-native';
-import {Svg, Permissions, Location} from 'expo';
+import {StyleSheet, View, Text} from 'react-native';
+import {Svg} from 'expo';
 import coordinates from './cyclothonCoordinates';
 
 // Blatant copy paste from https://stackoverflow.com/a/21279990
@@ -26,9 +26,6 @@ function deg2rad(deg) {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: 'white',
-    borderColor: 'black',
-    borderStyle: 'solid',
-    borderWidth: 1,
   },
 });
 
@@ -38,11 +35,28 @@ export default class ElevationGraph extends React.Component {
     this.state = {lastIndex: 0};
   }
 
-  componentDidMount() {
-    this.getLocationAsync();
-    setInterval(() => {
-      this.getLocationAsync();
-    }, 10000);
+  shouldComponentUpdate(nextProps, nextState) {
+    if (
+      nextProps.width != this.props.width ||
+      nextProps.height != this.props.height
+    ) {
+      return true;
+    }
+
+    const location = this.props.location;
+    if (!location && nextProps.location) {
+      return true;
+    }
+
+    const coords = this.props.location.coords;
+    const nextCoords = nextProps.location.coords;
+    if (
+      nextCoords.latitude != coords.latitude ||
+      nextCoords.longitude != coords.longitude
+    ) {
+      return true;
+    }
+    return false;
   }
 
   findClosestCoordinateIndex(currentLat, currentLong) {
@@ -54,30 +68,23 @@ export default class ElevationGraph extends React.Component {
     return distances.indexOf(Math.min(...distances));
   }
 
-  getLocationAsync = async () => {
-    let {status} = await Permissions.askAsync(Permissions.LOCATION);
-    if (status !== 'granted') {
-      this.setState({
-        errorMessage: 'Permission to access location was denied',
-      });
-    }
-
-    let location = await Location.getCurrentPositionAsync({});
-    let closestCoordinateIndex = this.findClosestCoordinateIndex(
-      location.coords.latitude,
-      location.coords.longitude
-    );
-    this.setState({lastIndex: closestCoordinateIndex});
-  };
-
   render() {
-    if (this.state.errorMessage) {
+    const location = this.props.location;
+    console.log('Render ElevationGraph');
+    if (!location) {
       return (
         <View style={styles.container}>
-          <Text>{this.state.errorMessage}</Text>
+          <Text>ERROR: Missing location data</Text>
         </View>
       );
     }
+    const coords = location.coords;
+    const closestCoordinateIndex = this.findClosestCoordinateIndex(
+      coords.latitude,
+      coords.longitude
+    );
+    this.setState({lastIndex: closestCoordinateIndex});
+
     const height = this.props.height;
     const width = this.props.width;
     const path = coordinates.points
@@ -90,13 +97,13 @@ export default class ElevationGraph extends React.Component {
     return (
       <View style={styles.container} width={width} height={height}>
         <Svg height={height} width={width}>
+          <Svg.Path d={path} fill="none" stroke="black" />
           <Svg.Path
             d={`M0 ${height} H${width}`}
             fill={'none'}
             stroke={'black'}
             strokeWidth={3}
           />
-          <Svg.Path d={path} fill="none" stroke="black" />
         </Svg>
       </View>
     );
