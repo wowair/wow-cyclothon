@@ -1,7 +1,7 @@
-import React from "react";
-import { StyleSheet, View } from "react-native";
-import { Svg, Permissions, Location } from "expo";
-import coordinates from "./cyclothonCoordinates";
+import React from 'react';
+import {StyleSheet, View} from 'react-native';
+import {Svg, Permissions, Location} from 'expo';
+import coordinates from './cyclothonCoordinates';
 
 // Blatant copy paste from https://stackoverflow.com/a/21279990
 function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
@@ -25,17 +25,17 @@ function deg2rad(deg) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "white",
-    borderColor: "black",
-    borderStyle: "solid",
-    borderWidth: 1
-  }
-})
+    backgroundColor: 'white',
+    borderColor: 'black',
+    borderStyle: 'solid',
+    borderWidth: 1,
+  },
+});
 
 export default class ElevationGraph extends React.Component {
   constructor() {
     super();
-    this.state = { lastIndex: 0 };
+    this.state = {lastIndex: 0};
   }
 
   componentDidMount() {
@@ -55,10 +55,10 @@ export default class ElevationGraph extends React.Component {
   }
 
   getLocationAsync = async () => {
-    let { status } = await Permissions.askAsync(Permissions.LOCATION);
-    if (status !== "granted") {
+    let {status} = await Permissions.askAsync(Permissions.LOCATION);
+    if (status !== 'granted') {
       this.setState({
-        errorMessage: "Permission to access location was denied"
+        errorMessage: 'Permission to access location was denied',
       });
     }
 
@@ -67,30 +67,33 @@ export default class ElevationGraph extends React.Component {
       location.coords.latitude,
       location.coords.longitude
     );
-    this.setState({ lastIndex: closestCoordinateIndex });
+    this.setState({lastIndex: closestCoordinateIndex});
   };
 
   render() {
-    const height = this.props.height
-    const width = this.props.width
+    if (this.state.errorMessage) {
+      return (
+        <View style={styles.container}>
+          <Text>{this.state.errorMessage}</Text>
+        </View>
+      );
+    }
+    const height = this.props.height;
+    const width = this.props.width;
     const path = coordinates.points
       .slice(this.state.lastIndex, this.state.lastIndex + width)
       .reduce(
         (currentPath, coord, index) =>
           `${currentPath} L${index} ${Math.ceil(250 - coord.ele)}`,
-        ""
+        'M0 0'
       );
     return (
-      <View
-        style={styles.container}
-        width={width}
-        height={height}
-        >
+      <View style={styles.container} width={width} height={height}>
         <Svg height={height} width={width}>
           <Svg.Path
             d={`M0 ${height} H${width}`}
-            fill={"none"}
-            stroke={"black"}
+            fill={'none'}
+            stroke={'black'}
             strokeWidth={3}
           />
           <Svg.Path d={path} fill="none" stroke="black" />
