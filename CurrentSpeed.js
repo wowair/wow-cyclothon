@@ -24,7 +24,6 @@ export default class CurrentSpeed extends React.Component {
   }
 
   render() {
-    console.log('Render CurrentSpeed');
     const location = this.props.location;
     if (!location) {
       return (

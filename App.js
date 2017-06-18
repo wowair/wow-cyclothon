@@ -24,7 +24,6 @@ export default class App extends React.Component {
       ? 0
       : this.state.locationIndex;
 
-    console.log(`locatinIndex:${locationIndex}`);
     const point = coordinates.points[locationIndex % coordinates.points.length];
     const speeds = [0, 20, 25, 0, 0, 30].map(s => {
       return s / 3.6;
