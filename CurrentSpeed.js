@@ -1,6 +1,5 @@
 import React from 'react';
 import {StyleSheet, View, Text} from 'react-native';
-import {Permissions, Location} from 'expo';
 
 const convertMetersPerSecondToKmPerHour = speedInMetersPerSecond =>
   speedInMetersPerSecond * 3.6;
@@ -8,24 +7,32 @@ const convertMetersPerSecondToKmPerHour = speedInMetersPerSecond =>
 export default class CurrentSpeed extends React.Component {
   constructor() {
     super();
-    this.state = {location: null};
   }
 
-  componentDidMount() {
-    this.getLocationAsync();
-    setInterval(() => {
-      this.getLocationAsync();
-    }, 1000);
-  }
+  shouldComponentUpdate(nextProps, nextState) {
+    const location = this.props.location;
+    if (!location && nextProps.location) {
+      return true;
+    }
 
-  getLocationAsync = async () => {
-    let {status} = await Permissions.askAsync(Permissions.LOCATION);
-    let location = await Location.getCurrentPositionAsync({});
-    this.setState({location});
-  };
+    const nextSpeed = nextProps.location.coords.speed;
+    const currentSpeed = this.props.location.coords.speed;
+    if (nextSpeed == currentSpeed) {
+      return false;
+    }
+    return true;
+  }
 
   render() {
-    const {location} = this.state;
+    console.log('Render CurrentSpeed');
+    const location = this.props.location;
+    if (!location) {
+      return (
+        <View style={styles.container}>
+          <Text>ERROR: Missing location data</Text>
+        </View>
+      );
+    }
     return (
       <View style={styles.container}>
         <Text style={styles.text}>
