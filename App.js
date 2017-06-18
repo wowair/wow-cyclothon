@@ -2,7 +2,7 @@ import React from 'react';
 import {StyleSheet, View, Dimensions, StatusBar, Text} from 'react-native';
 import {Permissions, Location} from 'expo';
 
-import coordinates from './cyclothonCoordinates';
+import RouteData from './data';
 import CurrentSpeed from './CurrentSpeed';
 import ElevationGraph from './ElevationGraph';
 import Timings from './Timings';
@@ -24,7 +24,8 @@ export default class App extends React.Component {
       ? 0
       : this.state.locationIndex;
 
-    const point = coordinates.points[locationIndex % coordinates.points.length];
+    const points = RouteData.points;
+    const point = points[locationIndex % points.length];
     const speeds = [0, 20, 25, 0, 0, 30].map(s => {
       return s / 3.6;
     });
@@ -78,6 +79,7 @@ export default class App extends React.Component {
       <View style={styles.container}>
         <StatusBar hidden={true} />
         <ElevationGraph
+          data={RouteData}
           location={this.state.location}
           height={height * 0.75}
           width={width}
