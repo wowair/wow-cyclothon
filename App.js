@@ -2,6 +2,7 @@ import React from 'react';
 import {StyleSheet, View, Dimensions, StatusBar, Text} from 'react-native';
 import {Permissions, Location} from 'expo';
 
+import coordinates from './cyclothonCoordinates';
 import CurrentSpeed from './CurrentSpeed';
 import ElevationGraph from './ElevationGraph';
 import Timings from './Timings';
@@ -15,10 +16,35 @@ export default class App extends React.Component {
   }
 
   componentDidMount() {
-    this.updateLocation();
-    setInterval(() => {
-      this.updateLocation();
-    }, 10000);
+    this.setupFakeLocation();
+  }
+
+  updateFakeLocation() {
+    var locationIndex = !this.state.locationIndex
+      ? 0
+      : this.state.locationIndex;
+
+    console.log(`locatinIndex:${locationIndex}`);
+    const point = coordinates.points[locationIndex % coordinates.points.length];
+    const speeds = [0, 20, 25, 0, 0, 30].map(s => {
+      return s / 3.6;
+    });
+    const speed = speeds[locationIndex % speeds.length];
+    this.setState({
+      locationIndex: locationIndex + 1,
+      location: {
+        coords: {
+          latitude: point.lat,
+          longitude: point.lon,
+          speed: speed,
+        },
+      },
+    });
+  }
+
+  setupFakeLocation() {
+    this.updateFakeLocation();
+    setInterval(this.updateFakeLocation.bind(this), 5000);
   }
 
   updateLocation = async () => {
@@ -32,6 +58,13 @@ export default class App extends React.Component {
     let location = await Location.getCurrentPositionAsync({});
     this.setState({location: location});
   };
+
+  setupGPSLocation() {
+    this.updateLocation();
+    setInterval(() => {
+      this.updateLocation();
+    }, 10000);
+  }
 
   render() {
     if (this.state.errorMessage) {
@@ -52,7 +85,7 @@ export default class App extends React.Component {
         />
         <View style={styles.stats}>
           <CurrentSpeed location={this.state.location} />
-          <Timings />
+          <Timings location={this.state.location} />
         </View>
       </View>
     );

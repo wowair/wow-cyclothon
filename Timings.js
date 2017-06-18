@@ -27,20 +27,40 @@ export default class Timings extends React.Component {
     this.state = {
       currentTotalSeconds: 0,
       currentStartDate: new Date(),
+      currentSpeed: 0,
     };
   }
 
   componentDidMount() {
-    setInterval(
-      () =>
-        this.setState({
-          currentTotalSeconds: Math.floor(
-            (new Date() - this.state.currentStartDate) / 1000
-          ),
-          currentStartDate: this.state.currentStartDate,
-        }),
-      500
-    );
+    setInterval(this.updateCurrentTimer.bind(this), 500);
+  }
+
+  resetCurrentTimer(speed) {
+    this.setState({
+      currentTotalSeconds: 0,
+      currentStartDate: new Date(),
+      currentSpeed: speed,
+    });
+  }
+
+  tickCurrentTimer(speed) {
+    this.setState({
+      currentTotalSeconds: Math.floor(
+        (new Date() - this.state.currentStartDate) / 1000
+      ),
+      currentStartDate: this.state.currentStartDate,
+      currentSpeed: speed,
+    });
+  }
+
+  updateCurrentTimer() {
+    curSpeed = this.state.currentSpeed;
+    nextSpeed = this.props.location ? this.props.location.coords.speed : 0;
+    if (nextSpeed > 0 && curSpeed == 0) {
+      this.resetCurrentTimer(nextSpeed);
+    } else {
+      this.tickCurrentTimer(nextSpeed);
+    }
   }
 
   format(totalSeconds) {
