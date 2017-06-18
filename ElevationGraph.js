@@ -68,6 +68,16 @@ export default class ElevationGraph extends React.Component {
     return distances.indexOf(Math.min(...distances));
   }
 
+  componentWillReceiveProps(nextProps) {
+    if (!nextProps.location) return;
+    const coords = nextProps.location.coords;
+    const closestCoordinateIndex = this.findClosestCoordinateIndex(
+      coords.latitude,
+      coords.longitude
+    );
+    this.setState({lastIndex: closestCoordinateIndex});
+  }
+
   render() {
     const location = this.props.location;
     console.log('Render ElevationGraph');
@@ -78,28 +88,24 @@ export default class ElevationGraph extends React.Component {
         </View>
       );
     }
-    const coords = location.coords;
-    const closestCoordinateIndex = this.findClosestCoordinateIndex(
-      coords.latitude,
-      coords.longitude
-    );
-    this.setState({lastIndex: closestCoordinateIndex});
 
-    const height = this.props.height;
-    const width = this.props.width;
     const path = coordinates.points
-      .slice(this.state.lastIndex, this.state.lastIndex + width)
+      .slice(this.state.lastIndex, this.state.lastIndex + this.props.width)
       .reduce(
         (currentPath, coord, index) =>
           `${currentPath} L${index} ${Math.ceil(250 - coord.ele)}`,
         'M0 0'
       );
     return (
-      <View style={styles.container} width={width} height={height}>
-        <Svg height={height} width={width}>
+      <View
+        style={styles.container}
+        width={this.props.width}
+        height={this.props.height}
+      >
+        <Svg height={this.props.height} width={this.props.width}>
           <Svg.Path d={path} fill="none" stroke="black" />
           <Svg.Path
-            d={`M0 ${height} H${width}`}
+            d={`M0 ${this.props.height} H${this.props.width}`}
             fill={'none'}
             stroke={'black'}
             strokeWidth={3}
