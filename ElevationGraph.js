@@ -3,8 +3,8 @@ import {StyleSheet, View, Text} from 'react-native';
 import {Svg} from 'expo';
 
 // Blatant copy paste from https://stackoverflow.com/a/21279990
-function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
-  var R = 6371; // Radius of the earth in km
+function getDistanceFromLatLonInMeters(lat1, lon1, lat2, lon2) {
+  var R = 637100; // Radius of the earth in meters
   var dLat = deg2rad(lat2 - lat1); // deg2rad below
   var dLon = deg2rad(lon2 - lon1);
   var a =
@@ -14,7 +14,7 @@ function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  var d = R * c; // Distance in km
+  var d = R * c; // Distance in meters
   return d;
 }
 
@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
 export default class ElevationGraph extends React.Component {
   constructor() {
     super();
-    this.state = {lastIndex: 0};
+    this.state = {currentIndex: 0};
   }
 
   shouldComponentUpdate(nextProps, nextState) {
@@ -60,9 +60,14 @@ export default class ElevationGraph extends React.Component {
 
   findClosestCoordinateIndex(data, currentLat, currentLong) {
     const distances = data.points
-      .slice(this.state.lastIndex, data.points.length)
+      .slice(this.state.currentIndex, data.points.length)
       .map(coord =>
-        getDistanceFromLatLonInKm(currentLat, currentLong, coord.lat, coord.lon)
+        getDistanceFromLatLonInMeters(
+          currentLat,
+          currentLong,
+          coord.lat,
+          coord.lon
+        )
       );
     return distances.indexOf(Math.min(...distances));
   }
@@ -75,12 +80,66 @@ export default class ElevationGraph extends React.Component {
       coords.latitude,
       coords.longitude
     );
-    this.setState({lastIndex: closestCoordinateIndex});
+    this.setState({currentIndex: closestCoordinateIndex});
+  }
+
+  getDataWindow(data, fromIndex, distance) {
+    // distance in meters
+    const dataWindow = data.points.slice(fromIndex, data.points.length).reduce((
+      result,
+      point,
+      index
+    ) => {
+      const copy = {...point};
+      if (result.points.length == 0) {
+        // first point in window
+        copy.total_dist = 0;
+        copy.dist = 0;
+        result.points.push(copy);
+        result.elevation_max = copy.ele;
+        result.elevation_min = copy.ele;
+        result.distance = 0;
+        return result;
+      }
+      if (result.distance > distance) {
+        return result;
+      }
+      const prev = result.points[result.points.length - 1];
+      copy.total_dist = prev.total_dist + copy.dist;
+      result.points.push(copy);
+      if (copy.ele > result.elevation_max) result.elevation_max = copy.ele;
+      if (copy.ele < result.elevation_min) result.elevation_min = copy.ele;
+      result.distance = copy.total_dist;
+      return result;
+    }, {
+      points: [],
+      distance: null,
+      elevation_max: null,
+      elevation_min: null,
+    });
+    return dataWindow;
+  }
+
+  normalizeDataWindow(data) {
+    const distance = data.distance;
+    const elevation_shift = -data.elevation_min;
+    data.elevation_min = 0;
+    data.elevation_max = data.elevation_max + elevation_shift;
+    const elevation_max = data.elevation_max;
+    data.points.forEach(point => {
+      // shift and noramlize elevation data
+      point.ele = point.ele + elevation_shift;
+      point.nele = point.ele / elevation_max;
+      // normalize distance data
+      point.ndist = point.dist / distance;
+      point.total_ndist = point.total_dist / distance;
+    });
+    return data;
   }
 
   render() {
-    const location = this.props.location;
     console.log('Render ElevationGraph');
+    const location = this.props.location;
     if (!location) {
       return (
         <View style={styles.container}>
@@ -88,27 +147,28 @@ export default class ElevationGraph extends React.Component {
         </View>
       );
     }
-    // ${Math.ceil(this.props.height - coord.ele)}`
-    // .slice(this.state.lastIndex, this.state.lastIndex + this.props.width)
-    function getX(x) {
-      return x / 1000;
+    const currentIndex = this.state.currentIndex;
+    const distance = 30 * 1000;
+    const window = this.getDataWindow(this.props.data, currentIndex, distance);
+    if (window.elevation_max < 200) {
+      window.elevation_max = 200;
+    } else if (window.elevation_max < 300) {
+      window.elevation_max = 300;
+    } else if (window.elevation_max < 400) {
+      window.elevation_max = 400;
+    } else if (window.elevation_max < 500) {
+      window.elevation_max = 500;
+    } else if (window.elevation_max < 600) {
+      window.elevation_max = 600;
     }
-    function getY(y) {
-      return this.props.height - y + 1;
-    }
-    const path = this.props.data.points.reduce((currentPath, coord, index) => {
-      return `${currentPath ? 'L' : 'M'} ${getX(coord.total_dist)} ${getY(
-        coord.ele
-      )}`;
-    }, '');
-
-    const distance = this.props.data.distance / 1000;
-    // <Svg.Path
-    //   d={`M0 ${this.props.height} H${this.props.width}`}
-    //   fill={'none'}
-    //   stroke={'black'}
-    //   strokeWidth={3}
-    // />
+    const nwindow = this.normalizeDataWindow(window);
+    const points = nwindow.points;
+    const path =
+      points.reduce((currentPath, coord, index) => {
+        return `${currentPath} ${currentPath
+          ? 'L'
+          : 'M'} ${coord.total_ndist} ${1 - coord.nele}`;
+      }, '') + 'L1 1 L0 1 Z';
     return (
       <View
         style={styles.container}
@@ -117,10 +177,11 @@ export default class ElevationGraph extends React.Component {
       >
         <Svg
           height={this.props.height}
-          width={distance}
-          viewBox={'0 0 100 600'}
+          width={this.props.width}
+          viewBox={'0 0 1 1'}
+          preserveAspectRatio={'none'}
         >
-          <Svg.Path d={path} fill="none" stroke="black" />
+          <Svg.Path d={path} fill="black" />
         </Svg>
       </View>
     );
