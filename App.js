@@ -30,7 +30,7 @@ export default class App extends React.Component {
       return s / 3.6;
     });
     const speed = speeds[locationIndex % speeds.length];
-    // console.log(`locationIndex:${locationIndex + 1}`);
+    console.log(`locationIndex:${locationIndex + 10}`);
     this.setState({
       locationIndex: locationIndex + 10,
       location: {
