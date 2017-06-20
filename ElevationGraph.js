@@ -29,6 +29,9 @@ const styles = StyleSheet.create({
 });
 
 export default class ElevationGraph extends React.Component {
+  // route stats
+  // max elevation: 592
+  // min elevation: -1
   constructor() {
     super();
     this.state = {currentIndex: 0};
@@ -81,16 +84,6 @@ export default class ElevationGraph extends React.Component {
     this.setState({currentIndex: closestCoordinateIndex});
   }
 
-  getMaxElevationScaled(y) {
-    // scale max elevation to min of 200 and step
-    // it at every 100 (200, 300, 400 , ...)
-    if (y > 100) {
-      return y - y % 100 + 100;
-    } else {
-      return 200;
-    }
-  }
-
   getDataWindow(data, fromIndex, distance) {
     // distance in meters
     const dataWindow = data.points.slice(fromIndex, data.points.length).reduce((
@@ -106,10 +99,10 @@ export default class ElevationGraph extends React.Component {
         result.points.push(copy);
         result.elevation_max = copy.ele;
         result.elevation_min = copy.ele;
-        result.distance = 0;
+        result.distance_max = 0;
         return result;
       }
-      if (result.distance > distance) {
+      if (result.distance_max >= distance) {
         return result;
       }
       const prev = result.points[result.points.length - 1];
@@ -117,11 +110,12 @@ export default class ElevationGraph extends React.Component {
       result.points.push(copy);
       if (copy.ele > result.elevation_max) result.elevation_max = copy.ele;
       if (copy.ele < result.elevation_min) result.elevation_min = copy.ele;
-      result.distance = copy.total_dist;
+      result.distance_max = copy.total_dist;
       return result;
     }, {
       points: [],
-      distance: null,
+      distance_max: null,
+      distance_min: 0,
       elevation_max: null,
       elevation_min: null,
     });
@@ -131,14 +125,14 @@ export default class ElevationGraph extends React.Component {
   getGrid(width, widthStep, height, heightStep, lineWidthPercent) {
     const lines = [];
 
-    // for (let w = 0; w < width; w += widthStep) {
-    //   lines.push({
-    //     x: w,
-    //     y: 0,
-    //     h: 100,
-    //     w: lineWidthPercent,
-    //   });
-    // }
+    for (let w = 0; w < width; w += widthStep) {
+      lines.push({
+        x: w,
+        y: 0,
+        h: 100,
+        w: lineWidthPercent,
+      });
+    }
     for (let h = 0; h < height; h += heightStep) {
       lines.push({
         x: 0,
@@ -147,42 +141,68 @@ export default class ElevationGraph extends React.Component {
         w: 100,
       });
     }
-    console.log(lines);
+    // console.log(`line count: ${lines.length}`);
+    // console.log(lines);
     return lines;
   }
 
+  getMaxElevationScaled(y) {
+    // scale max elevation to min of 200 and step
+    // it at every 100 (200, 300, 400 , ...)
+    if (y > 100) {
+      return y - y % 100 + 100;
+    } else {
+      return 200;
+    }
+  }
+
   normalizeDataWindow(data) {
-    // shift by extra 3 so that we never `flatline` because it is just ugly
-    const extra_shift = 3;
-    const elevation_shift = -data.elevation_min + extra_shift;
-    const y_size = 1000;
-    const x_size = 1000;
+    // normalize data to [0, 1] and scale to what ever y_scale and x_scale.
+    // y range -> [0, y_scale]
+    // x range -> [0, x_scale]
+
+    const y_scale = 1000;
+    const x_scale = 1000;
+
+    // extra_bottom_shift - shift data by this to avoid flat line at bottom
+    // extra_top_shift    - make y axis bigger to avoid flat line at top
+    const extra_bottom_shift = 3;
+    const extra_top_shift = 3;
+    const elevation_shift = -data.elevation_min + extra_bottom_shift;
     data.elevation_min = 0;
-    data.elevation_max = data.elevation_max + elevation_shift;
+    data.elevation_max = data.elevation_max + elevation_shift + extra_top_shift;
     data.elevation_max = this.getMaxElevationScaled(data.elevation_max);
 
-    const elevation_div = (data.elevation_max + elevation_shift) / y_size;
-
-    data.distance = data.distance;
-    const distance_div = data.distance / x_size;
+    console.log(
+      `elevation min:${data.elevation_min} max:${data.elevation_max} shift:${elevation_shift}`
+    );
+    console.log(`distance min:${data.distance_min} max:${data.distance_max}`);
     data.points.forEach(point => {
       // shift and normalize elevation data
       point.ele = point.ele + elevation_shift;
-      point.nele = point.ele / elevation_div;
+      point.nele = point.ele / data.elevation_max * y_scale;
+
       // normalize distance data
-      point.ndist = point.dist / distance_div;
-      point.total_ndist = point.total_dist / distance_div;
+      point.ndist = point.dist / data.distance_max * x_scale;
+      point.total_ndist = point.total_dist / data.distance_max * x_scale;
     });
-    data.nelevation_max = y_size;
+
+    console.log(`point:${data.points[data.points.length - 1].nele}`);
+    data.nelevation_max = y_scale;
     data.nelevation_min = 0;
-    data.ndistance_max = x_size;
+    data.ndistance_max = x_scale;
     data.ndistance_min = 0;
 
+    const y_grid_width = 100 / data.elevation_max * y_scale;
+    const x_grid_width = 5000 / data.distance_max * x_scale;
+
+    console.log(`x_grid_width:${x_grid_width} y_grid_width:${y_grid_width}`);
+
     data.grid = this.getGrid(
-      y_size,
-      data.elevation_max / 600 * 200,
-      x_size,
-      data.elevation_max / 600 * 200,
+      x_scale,
+      x_grid_width,
+      y_scale,
+      y_grid_width,
       0.25
     );
     return data;
@@ -201,22 +221,25 @@ export default class ElevationGraph extends React.Component {
     const currentIndex = this.state.currentIndex;
     const distance = 30 * 1000;
     const window = this.getDataWindow(this.props.data, currentIndex, distance);
-    console.log(`min:${window.elevation_min} max:${window.elevation_max}`);
+    // console.log(`min:${window.elevation_min} max:${window.elevation_max}`);
 
     const nwindow = this.normalizeDataWindow(window);
-    console.log(`min:${nwindow.elevation_min} max:${nwindow.elevation_max}`);
-
+    // console.log(`o min:${nwindow.elevation_min} max:${nwindow.elevation_max}`);
+    // console.log(
+    //   `n min:${nwindow.nelevation_min} max:${nwindow.nelevation_max}`
+    // );
     const points = nwindow.points;
     const path =
-      points.reduce((currentPath, coord, index) => {
+      points.reduce((currentPath, point, index) => {
         return `${currentPath} ${currentPath
           ? 'L'
-          : 'M'} ${coord.total_ndist} ${nwindow.nelevation_max - coord.nele}`;
+          : 'M'} ${point.total_ndist} ${nwindow.nelevation_max - point.nele}`;
       }, '') +
-      `L${nwindow.ndistance_max} ${nwindow.nelevation_max} ` +
-      `L${nwindow.ndistance_min} ${nwindow.nelevation_max} ` +
+      ` L ${nwindow.ndistance_max} ${nwindow.nelevation_max} ` +
+      `L ${nwindow.ndistance_min} ${nwindow.nelevation_max} ` +
       `Z`;
-    //
+    // console.log(path);
+
     return (
       <View
         style={styles.container}
