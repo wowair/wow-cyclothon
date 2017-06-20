@@ -138,15 +138,17 @@ export default class ElevationGraph extends React.Component {
     const elevation_shift = -data.elevation_min + extra_shift;
     data.elevation_min = extra_shift;
     data.elevation_max = data.elevation_max + elevation_shift;
-    const elevation_max = data.elevation_max;
     data.points.forEach(point => {
-      // shift and noramlize elevation data
+      // shift and normalize elevation data
       point.ele = point.ele + elevation_shift;
-      point.nele = point.ele / elevation_max;
+      point.nele = point.ele / data.elevation_max;
       // normalize distance data
       point.ndist = point.dist / distance;
       point.total_ndist = point.total_dist / distance;
     });
+    data.nelevation_max = 1;
+    data.nelevation_min = 1;
+    data.ndistance = 1;
     return data;
   }
 
@@ -163,14 +165,20 @@ export default class ElevationGraph extends React.Component {
     const currentIndex = this.state.currentIndex;
     const distance = 30 * 1000;
     const window = this.getDataWindow(this.props.data, currentIndex, distance);
+    console.log(`min:${window.elevation_min} max:${window.elevation_max}`);
+
     const nwindow = this.normalizeDataWindow(window);
+    console.log(`min:${nwindow.elevation_min} max:${nwindow.elevation_max}`);
+
     const points = nwindow.points;
     const path =
       points.reduce((currentPath, coord, index) => {
         return `${currentPath} ${currentPath
           ? 'L'
           : 'M'} ${coord.total_ndist} ${1 - coord.nele}`;
-      }, '') + 'L1 1 L0 1 Z';
+      }, '') +
+      `L${nwindow.ndistance} ${nwindow.nelevation_max} L0 ${nwindow.nelevation_min} Z`;
+
     return (
       <View
         style={styles.container}
