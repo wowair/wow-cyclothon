@@ -82,6 +82,7 @@ export default class App extends React.Component {
         <ElevationGraph
           data={RouteData}
           location={this.state.location}
+          distance={30}
           height={height * 0.8}
           width={width}
         />

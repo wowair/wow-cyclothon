@@ -259,7 +259,7 @@ export default class ElevationGraph extends React.Component {
       );
     }
     const currentIndex = this.state.currentIndex;
-    const distance = 30 * 1000;
+    const distance = this.props.distance * 1000;
     const window = this.getDataWindow(this.props.data, currentIndex, distance);
     // console.log(`min:${window.elevation_min} max:${window.elevation_max}`);
 
