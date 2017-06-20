@@ -59,16 +59,14 @@ export default class ElevationGraph extends React.Component {
   }
 
   findClosestCoordinateIndex(data, currentLat, currentLong) {
-    const distances = data.points
-      .slice(this.state.currentIndex, data.points.length)
-      .map(coord =>
-        getDistanceFromLatLonInMeters(
-          currentLat,
-          currentLong,
-          coord.lat,
-          coord.lon
-        )
-      );
+    const distances = data.points.map(coord =>
+      getDistanceFromLatLonInMeters(
+        currentLat,
+        currentLong,
+        coord.lat,
+        coord.lon
+      )
+    );
     return distances.indexOf(Math.min(...distances));
   }
 
@@ -161,6 +159,9 @@ export default class ElevationGraph extends React.Component {
     } else if (window.elevation_max < 600) {
       window.elevation_max = 600;
     }
+    // console.log(
+    //   `currentIndex:${currentIndex} elevation_max:${window.elevation_max}`
+    // );
     const nwindow = this.normalizeDataWindow(window);
     const points = nwindow.points;
     const path =
