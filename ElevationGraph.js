@@ -81,6 +81,16 @@ export default class ElevationGraph extends React.Component {
     this.setState({currentIndex: closestCoordinateIndex});
   }
 
+  getMaxElevationScaled(y) {
+    // scale max elevation to min of 200 and step
+    // it at every 100 (200, 300, 400 , ...)
+    if (y > 100) {
+      return y - y % 100 + 100;
+    } else {
+      return 200;
+    }
+  }
+
   getDataWindow(data, fromIndex, distance) {
     // distance in meters
     const dataWindow = data.points.slice(fromIndex, data.points.length).reduce((
@@ -115,6 +125,9 @@ export default class ElevationGraph extends React.Component {
       elevation_max: null,
       elevation_min: null,
     });
+    dataWindow.elevation_max = this.getMaxElevationScaled(
+      dataWindow.elevation_max
+    );
     return dataWindow;
   }
 
@@ -148,20 +161,6 @@ export default class ElevationGraph extends React.Component {
     const currentIndex = this.state.currentIndex;
     const distance = 30 * 1000;
     const window = this.getDataWindow(this.props.data, currentIndex, distance);
-    if (window.elevation_max < 200) {
-      window.elevation_max = 200;
-    } else if (window.elevation_max < 300) {
-      window.elevation_max = 300;
-    } else if (window.elevation_max < 400) {
-      window.elevation_max = 400;
-    } else if (window.elevation_max < 500) {
-      window.elevation_max = 500;
-    } else if (window.elevation_max < 600) {
-      window.elevation_max = 600;
-    }
-    // console.log(
-    //   `currentIndex:${currentIndex} elevation_max:${window.elevation_max}`
-    // );
     const nwindow = this.normalizeDataWindow(window);
     const points = nwindow.points;
     const path =
