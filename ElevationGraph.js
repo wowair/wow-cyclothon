@@ -125,30 +125,39 @@ export default class ElevationGraph extends React.Component {
       elevation_max: null,
       elevation_min: null,
     });
-    dataWindow.elevation_max = this.getMaxElevationScaled(
-      dataWindow.elevation_max
-    );
+    // dataWindow.elevation_max = this.getMaxElevationScaled(
+    //   dataWindow.elevation_max - dataWindow.elevation_min
+    // );
     return dataWindow;
   }
 
   normalizeDataWindow(data) {
-    const distance = data.distance;
     // shift by extra 3 so that we never `flatline` because it is just ugly
     const extra_shift = 3;
     const elevation_shift = -data.elevation_min + extra_shift;
-    data.elevation_min = extra_shift;
+    const y_size = 10;
+    const x_size = 10;
+    data.elevation_min = 0;
     data.elevation_max = data.elevation_max + elevation_shift;
+    data.elevation_max = this.getMaxElevationScaled(data.elevation_max);
+
+    const elevation_div = (data.elevation_max + elevation_shift) / y_size;
+
+    data.distance = data.distance;
+    const distance_div = data.distance / x_size;
     data.points.forEach(point => {
       // shift and normalize elevation data
       point.ele = point.ele + elevation_shift;
-      point.nele = point.ele / data.elevation_max;
+      point.nele = point.ele / elevation_div;
       // normalize distance data
-      point.ndist = point.dist / distance;
-      point.total_ndist = point.total_dist / distance;
+      point.ndist = point.dist / distance_div;
+      point.total_ndist = point.total_dist / distance_div;
     });
-    data.nelevation_max = 1;
-    data.nelevation_min = 1;
-    data.ndistance = 1;
+    data.nelevation_max = y_size;
+    data.nelevation_min = 0;
+    data.ndistance_max = x_size;
+    data.ndistance_min = 0;
+    data.grid = [];
     return data;
   }
 
@@ -175,9 +184,11 @@ export default class ElevationGraph extends React.Component {
       points.reduce((currentPath, coord, index) => {
         return `${currentPath} ${currentPath
           ? 'L'
-          : 'M'} ${coord.total_ndist} ${1 - coord.nele}`;
+          : 'M'} ${coord.total_ndist} ${nwindow.nelevation_max - coord.nele}`;
       }, '') +
-      `L${nwindow.ndistance} ${nwindow.nelevation_max} L0 ${nwindow.nelevation_min} Z`;
+      `L${nwindow.ndistance_max} ${nwindow.nelevation_max} ` +
+      `L${nwindow.ndistance_min} ${nwindow.nelevation_max} ` +
+      `Z`;
 
     return (
       <View
@@ -188,7 +199,7 @@ export default class ElevationGraph extends React.Component {
         <Svg
           height={this.props.height}
           width={this.props.width}
-          viewBox={'0 0 1 1'}
+          viewBox={`0 0 ${nwindow.ndistance_max} ${nwindow.nelevation_max}`}
           preserveAspectRatio={'none'}
         >
           <Svg.Path d={path} fill="black" />
