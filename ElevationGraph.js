@@ -122,23 +122,22 @@ export default class ElevationGraph extends React.Component {
     return dataWindow;
   }
 
-  getGrid(width, widthStep, height, heightStep, lineWidthPercent) {
+  getGrid(width, widthStep, height, heightStep) {
     const lines = [];
-
     for (let w = 0; w < width; w += widthStep) {
       lines.push({
-        x: w,
-        y: 0,
-        h: 100,
-        w: lineWidthPercent,
+        x1: w,
+        y1: 0,
+        x2: w,
+        y2: height,
       });
     }
     for (let h = 0; h < height; h += heightStep) {
       lines.push({
-        x: 0,
-        y: h,
-        h: lineWidthPercent,
-        w: 100,
+        x1: 0,
+        y1: h,
+        x2: width,
+        y2: h,
       });
     }
     // console.log(`line count: ${lines.length}`);
@@ -193,19 +192,46 @@ export default class ElevationGraph extends React.Component {
     data.ndistance_max = x_scale;
     data.ndistance_min = 0;
 
-    const y_grid_width = 100 / data.elevation_max * y_scale;
-    const x_grid_width = 5000 / data.distance_max * x_scale;
-
-    console.log(`x_grid_width:${x_grid_width} y_grid_width:${y_grid_width}`);
-
-    data.grid = this.getGrid(
+    const y_grid_large_width = 100 / data.elevation_max * y_scale;
+    const x_grid_large_width = 5000 / data.distance_max * x_scale;
+    // console.log(
+    //   `x_grid_large_width:${x_grid_large_width} y_grid_large_width:${y_grid_large_width}`
+    // );
+    data.gridLarge = this.getGrid(
       x_scale,
-      x_grid_width,
+      x_grid_large_width,
       y_scale,
-      y_grid_width,
-      0.25
+      y_grid_large_width
     );
+
+    const y_grid_small_width = 50 / data.elevation_max * y_scale;
+    const x_grid_small_width = 2500 / data.distance_max * x_scale;
+    // console.log(
+    //   `x_grid_small_width:${x_grid_small_width} y_grid_small_width:${y_grid_small_width}`
+    // );
+    data.gridSmall = this.getGrid(
+      x_scale,
+      x_grid_small_width,
+      y_scale,
+      y_grid_small_width
+    );
+
     return data;
+  }
+
+  renderGrid(grid, stroke, strokeWidth) {
+    return grid.map(grid => {
+      return (
+        <Svg.Line
+          x1={`${grid.x1}`}
+          y1={`${grid.y1}`}
+          x2={`${grid.x2}`}
+          y2={`${grid.y2}`}
+          stroke={`${stroke}`}
+          strokeWidth={`${strokeWidth}`}
+        />
+      );
+    });
   }
 
   render() {
@@ -253,17 +279,8 @@ export default class ElevationGraph extends React.Component {
           preserveAspectRatio={'none'}
         >
           <Svg.Path d={path} fill="black" />
-          {nwindow.grid.map(grid => {
-            return (
-              <Svg.Rect
-                x={`${grid.x}`}
-                y={`${grid.y}`}
-                width={`${grid.w}%`}
-                height={`${grid.h}%`}
-                fill={'red'}
-              />
-            );
-          })}
+          {this.renderGrid(nwindow.gridLarge, 'black', 5)}
+          {this.renderGrid(nwindow.gridSmall, 'red', 1)}
         </Svg>
       </View>
     );
