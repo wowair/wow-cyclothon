@@ -133,8 +133,10 @@ export default class ElevationGraph extends React.Component {
 
   normalizeDataWindow(data) {
     const distance = data.distance;
-    const elevation_shift = -data.elevation_min;
-    data.elevation_min = 0;
+    // shift by extra 3 so that we never `flatline` because it is just ugly
+    const extra_shift = 3;
+    const elevation_shift = -data.elevation_min + extra_shift;
+    data.elevation_min = extra_shift;
     data.elevation_max = data.elevation_max + elevation_shift;
     const elevation_max = data.elevation_max;
     data.points.forEach(point => {
