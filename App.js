@@ -82,7 +82,7 @@ export default class App extends React.Component {
         <ElevationGraph
           data={RouteData}
           location={this.state.location}
-          height={height * 0.75}
+          height={height * 0.8}
           width={width}
         />
         <View style={styles.stats}>
