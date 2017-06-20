@@ -122,7 +122,7 @@ export default class ElevationGraph extends React.Component {
     return dataWindow;
   }
 
-  getGrid(width, widthStep, height, heightStep) {
+  getGrid(width, widthStep, height, heightStep, heightOffset) {
     const lines = [];
     for (let w = 0; w < width; w += widthStep) {
       lines.push({
@@ -132,7 +132,8 @@ export default class ElevationGraph extends React.Component {
         y2: height,
       });
     }
-    for (let h = 0; h < height; h += heightStep) {
+
+    for (let h = heightOffset; h < height; h += heightStep) {
       lines.push({
         x1: 0,
         y1: h,
@@ -140,6 +141,15 @@ export default class ElevationGraph extends React.Component {
         y2: h,
       });
     }
+    for (let h = heightOffset - heightStep; h > 0; h -= heightStep) {
+      lines.push({
+        x1: 0,
+        y1: h,
+        x2: width,
+        y2: h,
+      });
+    }
+
     // console.log(`line count: ${lines.length}`);
     // console.log(lines);
     return lines;
@@ -172,10 +182,10 @@ export default class ElevationGraph extends React.Component {
     data.elevation_max = data.elevation_max + elevation_shift + extra_top_shift;
     data.elevation_max = this.getMaxElevationScaled(data.elevation_max);
 
-    console.log(
-      `elevation min:${data.elevation_min} max:${data.elevation_max} shift:${elevation_shift}`
-    );
-    console.log(`distance min:${data.distance_min} max:${data.distance_max}`);
+    // console.log(
+    //   `elevation min:${data.elevation_min} max:${data.elevation_max} shift:${elevation_shift}`
+    // );
+    // console.log(`distance min:${data.distance_min} max:${data.distance_max}`);
     data.points.forEach(point => {
       // shift and normalize elevation data
       point.ele = point.ele + elevation_shift;
@@ -186,12 +196,13 @@ export default class ElevationGraph extends React.Component {
       point.total_ndist = point.total_dist / data.distance_max * x_scale;
     });
 
-    console.log(`point:${data.points[data.points.length - 1].nele}`);
+    // console.log(`point:${data.points[data.points.length - 1].nele}`);
     data.nelevation_max = y_scale;
     data.nelevation_min = 0;
     data.ndistance_max = x_scale;
     data.ndistance_min = 0;
 
+    const y_grid_offset = y_scale - data.points[0].nele;
     const y_grid_large_width = 100 / data.elevation_max * y_scale;
     const x_grid_large_width = 5000 / data.distance_max * x_scale;
     // console.log(
@@ -201,7 +212,8 @@ export default class ElevationGraph extends React.Component {
       x_scale,
       x_grid_large_width,
       y_scale,
-      y_grid_large_width
+      y_grid_large_width,
+      y_grid_offset
     );
 
     const y_grid_small_width = 50 / data.elevation_max * y_scale;
@@ -213,7 +225,8 @@ export default class ElevationGraph extends React.Component {
       x_scale,
       x_grid_small_width,
       y_scale,
-      y_grid_small_width
+      y_grid_small_width,
+      y_grid_offset
     );
 
     return data;
@@ -279,8 +292,8 @@ export default class ElevationGraph extends React.Component {
           preserveAspectRatio={'none'}
         >
           <Svg.Path d={path} fill="black" />
-          {this.renderGrid(nwindow.gridLarge, 'black', 5)}
-          {this.renderGrid(nwindow.gridSmall, 'red', 1)}
+          {this.renderGrid(nwindow.gridSmall, 'grey', 2)}
+          {this.renderGrid(nwindow.gridLarge, 'black', 4)}
         </Svg>
       </View>
     );
