@@ -125,18 +125,38 @@ export default class ElevationGraph extends React.Component {
       elevation_max: null,
       elevation_min: null,
     });
-    // dataWindow.elevation_max = this.getMaxElevationScaled(
-    //   dataWindow.elevation_max - dataWindow.elevation_min
-    // );
     return dataWindow;
+  }
+
+  getGrid(width, widthStep, height, heightStep, lineWidthPercent) {
+    const lines = [];
+
+    // for (let w = 0; w < width; w += widthStep) {
+    //   lines.push({
+    //     x: w,
+    //     y: 0,
+    //     h: 100,
+    //     w: lineWidthPercent,
+    //   });
+    // }
+    for (let h = 0; h < height; h += heightStep) {
+      lines.push({
+        x: 0,
+        y: h,
+        h: lineWidthPercent,
+        w: 100,
+      });
+    }
+    console.log(lines);
+    return lines;
   }
 
   normalizeDataWindow(data) {
     // shift by extra 3 so that we never `flatline` because it is just ugly
     const extra_shift = 3;
     const elevation_shift = -data.elevation_min + extra_shift;
-    const y_size = 10;
-    const x_size = 10;
+    const y_size = 1000;
+    const x_size = 1000;
     data.elevation_min = 0;
     data.elevation_max = data.elevation_max + elevation_shift;
     data.elevation_max = this.getMaxElevationScaled(data.elevation_max);
@@ -157,7 +177,14 @@ export default class ElevationGraph extends React.Component {
     data.nelevation_min = 0;
     data.ndistance_max = x_size;
     data.ndistance_min = 0;
-    data.grid = [];
+
+    data.grid = this.getGrid(
+      y_size,
+      data.elevation_max / 600 * 200,
+      x_size,
+      data.elevation_max / 600 * 200,
+      0.25
+    );
     return data;
   }
 
@@ -189,7 +216,7 @@ export default class ElevationGraph extends React.Component {
       `L${nwindow.ndistance_max} ${nwindow.nelevation_max} ` +
       `L${nwindow.ndistance_min} ${nwindow.nelevation_max} ` +
       `Z`;
-
+    //
     return (
       <View
         style={styles.container}
@@ -203,6 +230,17 @@ export default class ElevationGraph extends React.Component {
           preserveAspectRatio={'none'}
         >
           <Svg.Path d={path} fill="black" />
+          {nwindow.grid.map(grid => {
+            return (
+              <Svg.Rect
+                x={`${grid.x}`}
+                y={`${grid.y}`}
+                width={`${grid.w}%`}
+                height={`${grid.h}%`}
+                fill={'red'}
+              />
+            );
+          })}
         </Svg>
       </View>
     );
