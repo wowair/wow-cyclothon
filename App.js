@@ -30,8 +30,9 @@ export default class App extends React.Component {
       return s / 3.6;
     });
     const speed = speeds[locationIndex % speeds.length];
+    // console.log(`locationIndex:${locationIndex + 1}`);
     this.setState({
-      locationIndex: locationIndex + 1,
+      locationIndex: locationIndex + 10,
       location: {
         coords: {
           latitude: point.lat,
@@ -44,7 +45,7 @@ export default class App extends React.Component {
 
   setupFakeLocation() {
     this.updateFakeLocation();
-    setInterval(this.updateFakeLocation.bind(this), 5000);
+    setInterval(this.updateFakeLocation.bind(this), 1000);
   }
 
   updateLocation = async () => {
