@@ -86,39 +86,40 @@ export default class ElevationGraph extends React.Component {
 
   getDataWindow(data, fromIndex, distance) {
     // distance in meters
-    const dataWindow = data.points.slice(fromIndex, data.points.length).reduce((
-      result,
-      point,
-      index
-    ) => {
-      const copy = {...point};
-      if (result.points.length == 0) {
-        // first point in window
-        copy.total_dist = 0;
-        copy.dist = 0;
-        result.points.push(copy);
-        result.elevation_max = copy.ele;
-        result.elevation_min = copy.ele;
-        result.distance_max = 0;
-        return result;
-      }
-      if (result.distance_max >= distance) {
-        return result;
-      }
-      const prev = result.points[result.points.length - 1];
-      copy.total_dist = prev.total_dist + copy.dist;
-      result.points.push(copy);
-      if (copy.ele > result.elevation_max) result.elevation_max = copy.ele;
-      if (copy.ele < result.elevation_min) result.elevation_min = copy.ele;
-      result.distance_max = copy.total_dist;
-      return result;
-    }, {
-      points: [],
-      distance_max: null,
-      distance_min: 0,
-      elevation_max: null,
-      elevation_min: null,
-    });
+    const dataWindow = data.points
+      .slice(fromIndex - 1, data.points.length)
+      .reduce(
+        (result, point, index) => {
+          const copy = {...point};
+          if (result.points.length == 0) {
+            // first point in window
+            copy.total_dist = 0;
+            copy.dist = 0;
+            result.points.push(copy);
+            result.elevation_max = copy.ele;
+            result.elevation_min = copy.ele;
+            result.distance_max = 0;
+            return result;
+          }
+          if (result.distance_max >= distance) {
+            return result;
+          }
+          const prev = result.points[result.points.length - 1];
+          copy.total_dist = prev.total_dist + copy.dist;
+          result.points.push(copy);
+          if (copy.ele > result.elevation_max) result.elevation_max = copy.ele;
+          if (copy.ele < result.elevation_min) result.elevation_min = copy.ele;
+          result.distance_max = copy.total_dist;
+          return result;
+        },
+        {
+          points: [],
+          distance_max: null,
+          distance_min: 0,
+          elevation_max: null,
+          elevation_min: null,
+        }
+      );
     return dataWindow;
   }
 
