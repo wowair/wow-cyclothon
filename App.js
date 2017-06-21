@@ -1,22 +1,25 @@
 import React from 'react';
 import {StyleSheet, View, Dimensions, StatusBar, Text} from 'react-native';
-import {Permissions, Location} from 'expo';
+import {Permissions, Location, KeepAwake} from 'expo';
 
-import coordinates from './cyclothonCoordinates';
+import RouteData from './data';
 import CurrentSpeed from './CurrentSpeed';
 import ElevationGraph from './ElevationGraph';
 import Timings from './Timings';
+import DistanceSelector from './DistanceSelector';
 
 console.ignoredYellowBox = ['Warning: View.propTypes'];
 
 export default class App extends React.Component {
   constructor() {
     super();
-    this.state = {};
+    this.state = {
+      distance: 30,
+    };
   }
 
   componentDidMount() {
-    this.setupFakeLocation();
+    this.setupGPSLocation();
   }
 
   updateFakeLocation() {
@@ -24,13 +27,15 @@ export default class App extends React.Component {
       ? 0
       : this.state.locationIndex;
 
-    const point = coordinates.points[locationIndex % coordinates.points.length];
+    const points = RouteData.points;
+    const point = points[locationIndex % points.length];
     const speeds = [0, 20, 25, 0, 0, 30].map(s => {
       return s / 3.6;
     });
     const speed = speeds[locationIndex % speeds.length];
+    // console.log(`locationIndex:${locationIndex + 10}`);
     this.setState({
-      locationIndex: locationIndex + 1,
+      locationIndex: locationIndex + 10,
       location: {
         coords: {
           latitude: point.lat,
@@ -43,7 +48,7 @@ export default class App extends React.Component {
 
   setupFakeLocation() {
     this.updateFakeLocation();
-    setInterval(this.updateFakeLocation.bind(this), 5000);
+    setInterval(this.updateFakeLocation.bind(this), 1000);
   }
 
   updateLocation = async () => {
@@ -65,6 +70,19 @@ export default class App extends React.Component {
     }, 10000);
   }
 
+  decreaseDistance() {
+    if (this.state.distance <= 5) return;
+    this.setState({
+      distance: this.state.distance - 5,
+    });
+  }
+
+  increaseDistance() {
+    this.setState({
+      distance: this.state.distance + 5,
+    });
+  }
+
   render() {
     if (this.state.errorMessage) {
       return (
@@ -78,14 +96,22 @@ export default class App extends React.Component {
       <View style={styles.container}>
         <StatusBar hidden={true} />
         <ElevationGraph
+          data={RouteData}
           location={this.state.location}
-          height={height * 0.75}
+          distance={this.state.distance}
+          height={height * 0.8}
           width={width}
         />
         <View style={styles.stats}>
           <CurrentSpeed location={this.state.location} />
           <Timings location={this.state.location} />
+          <DistanceSelector
+            decreaseHandler={this.decreaseDistance.bind(this)}
+            increaseHandler={this.increaseDistance.bind(this)}
+            currentDistance={this.state.distance}
+          />
         </View>
+        <KeepAwake />
       </View>
     );
   }
