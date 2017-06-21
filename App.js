@@ -19,7 +19,7 @@ export default class App extends React.Component {
   }
 
   componentDidMount() {
-    this.setupFakeLocation();
+    this.setupGPSLocation();
   }
 
   updateFakeLocation() {
