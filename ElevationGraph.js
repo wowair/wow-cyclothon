@@ -252,7 +252,7 @@ export default class ElevationGraph extends React.Component {
   }
 
   render() {
-    console.log('Render ElevationGraph');
+    // console.log('Render ElevationGraph');
     const location = this.props.location;
     if (!location) {
       return (
@@ -282,7 +282,9 @@ export default class ElevationGraph extends React.Component {
       `L ${nwindow.ndistance_min} ${nwindow.nelevation_max} ` +
       `Z`;
     // console.log(path);
-
+    //
+    const textX = 900;
+    const textY = 950;
     return (
       <View
         style={styles.container}
@@ -298,6 +300,15 @@ export default class ElevationGraph extends React.Component {
           <Svg.Path d={path} fill="black" />
           {this.renderGrid(nwindow.gridSmall, 'grey', 2)}
           {this.renderGrid(nwindow.gridLarge, 'black', 4)}
+          <Svg.Text
+            stroke="red"
+            fontSize="20"
+            x={`${textX}`}
+            y={`${textY}`}
+            textAnchor="middle"
+          >
+            Hæðargögn: LMÍ
+          </Svg.Text>
         </Svg>
       </View>
     );
