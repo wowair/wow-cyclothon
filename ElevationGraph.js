@@ -87,7 +87,7 @@ export default class ElevationGraph extends React.Component {
   getDataWindow(data, fromIndex, distance) {
     // distance in meters
     const dataWindow = data.points
-      .slice(fromIndex - 1, data.points.length)
+      .slice(fromIndex > 1 ? fromIndex - 1 : fromIndex, data.points.length)
       .reduce(
         (result, point, index) => {
           const copy = {...point};
