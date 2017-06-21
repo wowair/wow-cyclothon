@@ -1,6 +1,6 @@
 import React from 'react';
 import {StyleSheet, View, Dimensions, StatusBar, Text} from 'react-native';
-import {Permissions, Location} from 'expo';
+import {Permissions, Location, KeepAwake} from 'expo';
 
 import RouteData from './data';
 import CurrentSpeed from './CurrentSpeed';
@@ -111,6 +111,7 @@ export default class App extends React.Component {
             currentDistance={this.state.distance}
           />
         </View>
+        <KeepAwake />
       </View>
     );
   }
