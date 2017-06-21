@@ -38,6 +38,10 @@ export default class ElevationGraph extends React.Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
+    if (nextProps.distance != this.props.distance) {
+      return true;
+    }
+
     if (
       nextProps.width != this.props.width ||
       nextProps.height != this.props.height

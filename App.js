@@ -6,13 +6,16 @@ import RouteData from './data';
 import CurrentSpeed from './CurrentSpeed';
 import ElevationGraph from './ElevationGraph';
 import Timings from './Timings';
+import DistanceSelector from './DistanceSelector';
 
 console.ignoredYellowBox = ['Warning: View.propTypes'];
 
 export default class App extends React.Component {
   constructor() {
     super();
-    this.state = {};
+    this.state = {
+      distance: 30,
+    };
   }
 
   componentDidMount() {
@@ -30,7 +33,7 @@ export default class App extends React.Component {
       return s / 3.6;
     });
     const speed = speeds[locationIndex % speeds.length];
-    console.log(`locationIndex:${locationIndex + 10}`);
+    // console.log(`locationIndex:${locationIndex + 10}`);
     this.setState({
       locationIndex: locationIndex + 10,
       location: {
@@ -67,6 +70,19 @@ export default class App extends React.Component {
     }, 10000);
   }
 
+  decreaseDistance() {
+    if (this.state.distance <= 5) return;
+    this.setState({
+      distance: this.state.distance - 5,
+    });
+  }
+
+  increaseDistance() {
+    this.setState({
+      distance: this.state.distance + 5,
+    });
+  }
+
   render() {
     if (this.state.errorMessage) {
       return (
@@ -82,13 +98,18 @@ export default class App extends React.Component {
         <ElevationGraph
           data={RouteData}
           location={this.state.location}
-          distance={30}
+          distance={this.state.distance}
           height={height * 0.8}
           width={width}
         />
         <View style={styles.stats}>
           <CurrentSpeed location={this.state.location} />
           <Timings location={this.state.location} />
+          <DistanceSelector
+            decreaseHandler={this.decreaseDistance.bind(this)}
+            increaseHandler={this.increaseDistance.bind(this)}
+            currentDistance={this.state.distance}
+          />
         </View>
       </View>
     );
