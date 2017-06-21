@@ -14,7 +14,7 @@ export default class DistanceSelector extends React.Component {
           -
         </Button>
         <Text stroke="black" style={styles.text}>
-          {`${this.props.currentDistance}`}
+          {`${this.props.currentDistance} km`}
         </Text>
         <Button style={styles.button} onPress={this.props.increaseHandler}>
           +
