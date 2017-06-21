@@ -305,6 +305,7 @@ export default class ElevationGraph extends React.Component {
           {this.renderGrid(nwindow.gridSmall, '#C0C0C0', 2)}
           {this.renderGrid(nwindow.gridLarge, '#606060', 4)}
           <Svg.Text
+            fill="red"
             stroke="red"
             fontSize="20"
             x={`${textX}`}
