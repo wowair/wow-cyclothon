@@ -234,7 +234,9 @@ export default class ElevationGraph extends React.Component {
   }
 
   renderGrid(grid, stroke, strokeWidth) {
+    let key = 0;
     return grid.map(grid => {
+      key += 1;
       return (
         <Svg.Line
           x1={`${grid.x1}`}
@@ -243,6 +245,7 @@ export default class ElevationGraph extends React.Component {
           y2={`${grid.y2}`}
           stroke={`${stroke}`}
           strokeWidth={`${strokeWidth}`}
+          key={`${key}`}
         />
       );
     });
